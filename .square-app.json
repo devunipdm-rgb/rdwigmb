@@ -1,0 +1,21 @@
+{
+  "name": "rdwigmb",
+  "build": {
+    "command": "npm install",
+    "output": "server.js"
+  },
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/server.js"
+    }
+  ],
+  "env": {
+    "NODE_VERSION": "18"
+  },
+  "functions": {
+    "server.js": {
+      "runtime": "nodejs18.x"
+    }
+  }
+}
