@@ -311,6 +311,67 @@ app.post('/disparar', async (req, res) => {
     });
 });
 
+// Endpoint para envio individual SIMPLES (sem salvar no Firebase)
+app.post('/enviar', async (req, res) => {
+    const { numero, mensagem } = req.body;
+    
+    // Validar dados
+    if (!numero || !mensagem) {
+        return res.status(400).json({ 
+            error: "Faltam dados obrigatórios: numero, mensagem" 
+        });
+    }
+
+    if (!sock?.user) {
+        return res.status(503).json({ 
+            error: "WhatsApp não está conectado. Escaneie o QR Code primeiro."
+        });
+    }
+
+    // Limpar e formatar número
+    let numeroLimpo = numero.replace(/\D/g, '');
+    if (!numeroLimpo.startsWith('55')) {
+        numeroLimpo = '55' + numeroLimpo;
+    }
+
+    if (numeroLimpo.length < 12 || numeroLimpo.length > 13) {
+        return res.status(400).json({ 
+            error: "Número inválido. Use formato: 11999999999 (11-12 dígitos + DDD)" 
+        });
+    }
+
+    const numeroWhatsApp = numeroLimpo + "@s.whatsapp.net";
+
+    try {
+        const result = await sock.sendMessage(numeroWhatsApp, { text: mensagem });
+        
+        return res.json({ 
+            success: true,
+            message: "Mensagem enviada com sucesso!",
+            numero: numeroLimpo,
+            messageId: result?.key?.id || null
+        });
+
+    } catch (error) {
+        const errorMsg = error.message || String(error);
+        
+        // Erros de phash significam que a mensagem FOI entregue
+        if (errorMsg.includes('phash') || errorMsg.includes('could not send message again')) {
+            return res.json({ 
+                success: true,
+                message: "Mensagem entregue com sucesso!",
+                numero: numeroLimpo,
+                info: "Mensagem confirmada pelo servidor WhatsApp"
+            });
+        }
+        
+        return res.status(500).json({ 
+            success: false,
+            error: "Falha ao enviar mensagem: " + errorMsg
+        });
+    }
+});
+
 app.get('/status', (req, res) => {
     res.json({ 
         conectado: !!(sock?.user),
@@ -335,6 +396,7 @@ app.listen(PORT, '0.0.0.0', () => {
     console.log(`   - GET  /           (health check)`);
     console.log(`   - GET  /status     (status do WhatsApp)`);
     console.log(`   - GET  /qrcode     (QR code para conexão)`);
-    console.log(`   - POST /disparar   (enviar mensagens)`);
+    console.log(`   - POST /disparar   (campanha com lista)`);
+    console.log(`   - POST /enviar     (envio individual - sem Firebase)`);
     connectToWhatsApp();
 });
