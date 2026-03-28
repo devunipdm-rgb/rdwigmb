@@ -2,6 +2,7 @@
   "name": "rdwigmb",
   "build": {
     "command": "npm install",
+    "start": "npm start",
     "output": "server.js"
   },
   "routes": [
