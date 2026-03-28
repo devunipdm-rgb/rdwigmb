@@ -174,7 +174,6 @@ async function startCampaign(campanhaId, listaContatos, mensagem) {
                     
                     const result = await sock.sendMessage(numeroWhatsApp, { text: mensagem });
                     
-                    enviados++; // Incrementar contador silenciosamente
                     sucesso = true;
                     enviados++;
 
@@ -194,7 +193,6 @@ async function startCampaign(campanhaId, listaContatos, mensagem) {
                     if (errorMsg.includes('phash') || errorMsg.includes('could not send message again')) {
                         // Entregue com sucesso
                         sucesso = true;
-                        enviados++;
                         
                         // Registrar como sucesso
                         await db.collection('envios_concluidos').add({
