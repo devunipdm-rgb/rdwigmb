@@ -329,7 +329,7 @@ app.get('/', (req, res) => {
     });
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = 80; // Square Cloud requer porta 80
 console.log(`🚀 Iniciando servidor na porta ${PORT}...`);
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Backend rodando na porta ${PORT}`);
