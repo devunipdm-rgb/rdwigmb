@@ -1,0 +1,54 @@
+========================================
+VARIÁVEIS DE AMBIENTE - SQUARE CLOUD (FORMATADO)
+========================================
+
+Copie e cole estas variáveis no Dashboard do Square Cloud
+em: Settings → Environment Variables
+
+IMPORTANTE: Valores com espaços ou caracteres especiais
+precisam estar entre aspas duplas!
+
+========================================
+VARIÁVEIS FORMATADAS PARA SQUARE CLOUD
+========================================
+
+PORT=7373
+
+FIREBASE_PROJECT_ID="igmbinstituto"
+
+FIREBASE_PRIVATE_KEY_ID="495f67aab6af268f86fedee35c08317dc062a0ed"
+
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMIIEvAIBADANBgkqhkiG9w0BAQEFAASCBKYwggSiAgEAAoIBAQC/1LoWdhBNTI50\nWdmZSalzNYFkJWnqKDoya5Np0gQc/u7AMg+eHdWvKTgsDsfEyam/Ox+KAEEMtDek\nopnG5rjsLR4pYCHOMAlGVtARLUA2I8+uYGrLtVY4krBx/uyBOEU4HEumAJcU+pRT\nzYkYDwKrqMzlO6E607PAg4Aik7puROBucSgxL4BjGGRCyiHYqEFvsm14TpKqaGY+\ngsfobocvW8HQEy4NUsJwMLGDGtfTxa93kcKFUYA5zJCAr2KsUCf2Uku5e8ZgfnTL\nFrZZU/93lj+4JsSmdDSGJ9+JIOM6YQYd3FjMa9zSxXU0XzFJUgfk21RFMtbNTwoJ\n9z+/QWg3AgMBAAECggEAXO1Mnh/gYsnAwo1aE18zNmvHe/+B0Nxe4NjrBtqlgnRe\nrP0zQpnaT2mM3A7m6CX21HvsGdpoqKJOyDK6grd3AnYSw+FdTvhHLetVDNUaY3+y\nlhr/8SGtnGc3EWn4INrk8TsHzGlBxvhiTTxmeqCe3xA8/ZkG0CwIyiwJsPZWXB6r\n06f6EZD5KEwwOM8UbUoCAbThCEbELrciQtYVedIOw/s47nz2rFDqOGsH1ISFNeTt\n8fCyVhRfh6LCPkqqfmG0JayaA5PswxCqH0R2ZwCxNwWfFX+/IQEjl+KV1mOrF6JZ\n8ixMjC1F+AGwOcGx+0TfWup5TC/jOhoA+dmSvitauQKBgQDeJcNJUQn1BJm6hHYB\ng+QIbwx3XmYS8TreogVwZvh6gVRD8ijMOw3uvKAlLI07HycK1G3+qnWvjHEXZROt\ni2BUuOobKtBU5beFCxeBl7e7LowQl6MJ9tL6fZjWk7e2LRZwpgyPGb9LXht/wNMk\nmNNqB95Hoi/YVl6SZ+vbs8guuQKBgQDdEEecIvk/xTsMpNVBXFzqyqvZkiJsn/LA\nB1iUzVj/5xVj2Q3VIgy3RkKZYXC10w4C25aGPQ9SGCM32TeTPKI/sU66LYL1BIEi\n4cp27TvfVLzFvQwMQGwSCquCiL3HmuKTE7Mj24iwGnJf1Ml34jAYmO3GbvvSdRtl\nvrjucFtWbwKBgGNbgHzKQinUZO2HUUBcPSGIiYraLc1LF4l77fLYG0qvjYDWTmkK\nALFGrFn0EzbeOBgf6xJ8KybZKbvM+YAlVnCORCbif0t5cxuOWnUb5pFRwFOrfsB2\nJObkRfezGffhMqgvnG5klaqf7Ky3EbjMocJKwqBHah7YgnP5BwS85EwBAoGAGw1m\n9gCBqAAm3cE+J6V56XGr3hA4Djr0pfNAL9WBUq+guntRagekrrj2ZXa7KEUPreHZ\nZcwLF+zEQo1ec7Iz2L+F9tqi8AEBHJetAyi87vObtkcQNl+b2glcO7koIEkf+Qes\nIHM5IvPZk0ii7vzLDfeJAYOLZZHXLHhOgT9WrhkCgYAhCdCxD/a1o4+o7/OmyaII\nhZ7RameNL9eAkE0bmkXLKkXJ2F6pt0SmTQC6a0Uw8hgR5GELd2rp0s4JXB+fkkCR\npO7pUc2hl0PKuHADMflnO6OPFlO4BCuoyUDsbQH4BYSpfGX8AywFkDPMAi6ygH5x\nublxhDrc7761eqPE5iPAOg==\n-----END PRIVATE KEY-----\n"
+
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk-fbsvc@igmbinstituto.iam.gserviceaccount.com"
+
+FIREBASE_CLIENT_ID="111197965320440995342"
+
+FIREBASE_AUTH_URI="https://accounts.google.com/o/oauth2/auth"
+
+FIREBASE_TOKEN_URI="https://oauth2.googleapis.com/token"
+
+FIREBASE_AUTH_PROVIDER_CERT_URL="https://www.googleapis.com/oauth2/v1/certs"
+
+FIREBASE_DATABASE_URL="https://igmbinstituto.firebaseio.com"
+
+========================================
+INSTRUÇÕES
+========================================
+
+1. Vá ao Dashboard do Square Cloud
+2. Settings → Environment Variables  
+3. Delete todas as variáveis existentes
+4. Copie e cole as variáveis acima (uma por linha)
+5. Salve as alterações
+6. Reinicie sua aplicação no Square Cloud
+
+========================================
+IMPORTANTE
+========================================
+
+- Todas as variáveis que contêm URLs, emails ou 
+  caracteres especiais estão entre aspas duplas
+- A FIREBASE_PRIVATE_KEY está formatada com \n 
+  para quebras de linha corretas
+- Remova a variável MY_ACCOUNT_NAME se existir
