@@ -301,6 +301,99 @@
             margin-bottom: 15px;
             font-weight: 600;
         }
+
+        /* Abas de navegação */
+        .tabs-nav {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 15px;
+            border: none;
+            background: #f5f5f5;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn:hover {
+            background: #e0e0e0;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Seções de conteúdo */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Tabela de histórico */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .history-table th,
+        .history-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .history-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .history-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .status-sucesso {
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .status-falha {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .history-empty {
+            text-align: center;
+            padding: 30px;
+            color: #999;
+        }
+
+        .btn-refresh-history {
+            background: #f0f0f0;
+            color: #333;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+
+        .btn-refresh-history:hover {
+            background: #e0e0e0;
+        }
     </style>
 </head>
 <body>
@@ -344,47 +437,69 @@
             <div class="refresh-info" id="refreshInfo"></div>
         </div>
 
-        <!-- Form Section -->
-        <div class="form-section" id="formSection">
-            <form id="messageForm">
-                <div class="form-group">
-                    <label for="phoneNumber">
-                        📱 Número de WhatsApp
-                        <span class="counter" id="charCounter">0</span>
-                    </label>
-                    <input 
-                        type="tel" 
-                        id="phoneNumber" 
-                        placeholder="Ex: 34998713466 (sem +55)" 
-                        required
-                        pattern="[0-9]+"
-                        maxlength="20"
-                    >
-                    <div class="contact-preview" id="phonePreview" style="display: none;"></div>
-                </div>
+        <!-- Abas de Navegação -->
+        <div class="tabs-nav" id="tabsNav" style="display: none;">
+            <button type="button" class="tab-btn active" data-tab="enviar">📤 Enviar</button>
+            <button type="button" class="tab-btn" data-tab="historico">📜 Histórico</button>
+        </div>
 
-                <div class="form-group">
-                    <label for="message">
-                        ✉️ Mensagem
-                        <span class="counter" id="msgCounter">0</span>
-                    </label>
-                    <textarea 
-                        id="message" 
-                        placeholder="Digite sua mensagem aqui..." 
-                        required
-                        maxlength="1000"
-                    ></textarea>
-                </div>
+        <!-- Tab Enviar -->
+        <div class="tab-content active" id="tabEnviar">
+            <!-- Form Section -->
+            <div class="form-section" id="formSection">
+                <form id="messageForm">
+                    <div class="form-group">
+                        <label for="phoneNumber">
+                            📱 Número de WhatsApp
+                            <span class="counter" id="charCounter">0</span>
+                        </label>
+                        <input 
+                            type="tel" 
+                            id="phoneNumber" 
+                            placeholder="Ex: 34998713466 (sem +55)" 
+                            required
+                            pattern="[0-9]+"
+                            maxlength="20"
+                        >
+                        <div class="contact-preview" id="phonePreview" style="display: none;"></div>
+                    </div>
 
-                <div class="button-group">
-                    <button type="submit" class="btn-send" id="sendBtn">
-                        Enviar Mensagem
-                    </button>
-                    <button type="button" class="btn-refresh" id="refreshBtn" title="Atualizar Status">
-                        🔄
-                    </button>
+                    <div class="form-group">
+                        <label for="message">
+                            ✉️ Mensagem
+                            <span class="counter" id="msgCounter">0</span>
+                        </label>
+                        <textarea 
+                            id="message" 
+                            placeholder="Digite sua mensagem aqui..." 
+                            required
+                            maxlength="1000"
+                        ></textarea>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="submit" class="btn-send" id="sendBtn">
+                            Enviar Mensagem
+                        </button>
+                        <button type="button" class="btn-refresh" id="refreshBtn" title="Atualizar Status">
+                            🔄
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Tab Histórico -->
+        <div class="tab-content" id="tabHistorico">
+            <div class="form-section" id="historySection" style="display: block;">
+                <h3 style="margin-bottom: 15px; color: #333;">📜 Histórico de Envios</h3>
+                <button type="button" class="btn-refresh-history" id="refreshHistoryBtn">
+                    🔄 Atualizar
+                </button>
+                <div id="historyContainer">
+                    <div class="history-empty">Carregando histórico...</div>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 
@@ -392,6 +507,7 @@
         const API_BASE = 'https://rdwigmb.squareweb.app'; // Square Cloud direto
         let isConnected = false;
         let checkStatusInterval;
+        let isSending = false; // Bloqueio para evitar cliques duplos
 
         const statusBadge = document.getElementById('statusBadge');
         const statusText = document.getElementById('statusText');
@@ -409,6 +525,11 @@
         const msgCounter = document.getElementById('msgCounter');
         const phonePreview = document.getElementById('phonePreview');
         const refreshInfo = document.getElementById('refreshInfo');
+        const tabsNav = document.getElementById('tabsNav');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const historyContainer = document.getElementById('historyContainer');
+        const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
 
         document.addEventListener('DOMContentLoaded', () => {
             checkStatus();
@@ -427,6 +548,14 @@
             messageInput.addEventListener('input', () => {
                 msgCounter.textContent = messageInput.value.length;
             });
+
+            // Event listeners para abas
+            tabBtns.forEach(btn => {
+                btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+            });
+
+            // Event listener para atualizar histórico
+            refreshHistoryBtn.addEventListener('click', loadHistory);
         });
 
         async function checkStatus() {
@@ -511,12 +640,68 @@
             if (isConnected) {
                 formSection.classList.add('active');
                 qrcodeSection.classList.remove('active');
+                tabsNav.style.display = 'flex';
                 phoneInput.disabled = false;
                 messageInput.disabled = false;
+                loadHistory();
             } else {
                 formSection.classList.remove('active');
+                tabsNav.style.display = 'none';
                 phoneInput.disabled = true;
                 messageInput.disabled = true;
+            }
+        }
+
+        function switchTab(tabName) {
+            tabBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabName);
+            });
+            tabContents.forEach(content => {
+                content.classList.toggle('active', content.id === `tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
+            });
+            if (tabName === 'historico') {
+                loadHistory();
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                historyContainer.innerHTML = '<div class="history-empty">Carregando histórico...</div>';
+                const response = await fetch(`${API_BASE}/historico`);
+                const data = await response.json();
+
+                if (!data.success || data.registros.length === 0) {
+                    historyContainer.innerHTML = '<div class="history-empty">Nenhum registro encontrado</div>';
+                    return;
+                }
+
+                const table = document.createElement('table');
+                table.className = 'history-table';
+                table.innerHTML = `
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Contato</th>
+                            <th>Campanha</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.registros.map(reg => `
+                            <tr>
+                                <td>${reg.data ? new Date(reg.data).toLocaleString('pt-BR') : '-'}</td>
+                                <td>${reg.contato}</td>
+                                <td>${reg.campanhaId}</td>
+                                <td class="status-${reg.status}">${reg.status === 'sucesso' ? '✅ Sucesso' : '❌ Falha'}</td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                `;
+                historyContainer.innerHTML = '';
+                historyContainer.appendChild(table);
+            } catch (error) {
+                console.error('Erro ao carregar histórico:', error);
+                historyContainer.innerHTML = '<div class="history-empty">Erro ao carregar histórico</div>';
             }
         }
 
@@ -535,6 +720,14 @@
 
         async function handleSendMessage(e) {
             e.preventDefault();
+
+            // Bloquear se já estiver enviando
+            if (isSending) {
+                showAlert('⏳ Aguarde, mensagem já está sendo enviada...', 'error');
+                return;
+            }
+
+            isSending = true;
 
             let phone = phoneInput.value.trim();
             const message = messageInput.value.trim();
@@ -594,6 +787,7 @@
                 console.error('Erro ao enviar:', error);
                 showAlert('❌ Erro ao conectar com servidor. Verifique a conexão e tente novamente.', 'error');
             } finally {
+                isSending = false;
                 sendBtn.disabled = !isConnected;
                 sendBtn.innerHTML = 'Enviar Mensagem';
             }
