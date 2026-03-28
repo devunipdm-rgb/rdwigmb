@@ -321,8 +321,22 @@ app.get('/status', (req, res) => {
     });
 });
 
+app.get('/', (req, res) => {
+    res.json({ 
+        status: 'online',
+        service: 'WhatsApp Disparador API',
+        timestamp: new Date().toISOString()
+    });
+});
+
 const PORT = process.env.PORT || 3000;
+console.log(`🚀 Iniciando servidor na porta ${PORT}...`);
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Backend rodando na porta ${PORT}`);
+    console.log(`✅ Backend rodando na porta ${PORT}`);
+    console.log(`📝 Endpoints disponíveis:`);
+    console.log(`   - GET  /           (health check)`);
+    console.log(`   - GET  /status     (status do WhatsApp)`);
+    console.log(`   - GET  /qrcode     (QR code para conexão)`);
+    console.log(`   - POST /disparar   (enviar mensagens)`);
     connectToWhatsApp();
 });

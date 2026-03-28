@@ -310,7 +310,7 @@
             <h1>📱 Disparador WhatsApp</h1>
             <p>RDW IGMB - Baileys & Firebase</p>
             <div class="server-info">
-                🌐 Servidor: rdwigmb.squareweb.app
+                🌐 Servidor: rdwigmb.squareweb.app (Square Cloud Direto)
             </div>
             <div class="status-badge disconnected" id="statusBadge">
                 <span class="loading-spinner"></span>
@@ -389,7 +389,7 @@
     </div>
 
     <script>
-        const API_BASE = 'https://rdwigmb.squareweb.app';
+        const API_BASE = 'https://rdwigmb.squareweb.app'; // Square Cloud direto
         let isConnected = false;
         let checkStatusInterval;
 
@@ -485,16 +485,20 @@
         async function loadQRCode() {
             try {
                 const response = await fetch(`${API_BASE}/qrcode`);
-                const html = await response.text();
+                const data = await response.json();
 
-                if (html === 'Conectado') {
+                if (data.conectado) {
                     qrcodeSection.classList.remove('active');
                     return;
                 }
 
-                qrcodeSection.classList.add('active');
-                qrcodeContainer.innerHTML = html;
-                refreshInfo.textContent = 'QR Code atualizado. Scan com seu celular.';
+                if (data.qrcode) {
+                    qrcodeSection.classList.add('active');
+                    qrcodeContainer.innerHTML = `<img src="${data.qrcode}" alt="QR Code">`;
+                    refreshInfo.textContent = 'QR Code atualizado. Scan com seu celular.';
+                } else if (data.error) {
+                    qrcodeContainer.innerHTML = `<div class="qrcode-placeholder">${data.error}</div>`;
+                }
 
                 setTimeout(loadQRCode, 30000);
             } catch (error) {
