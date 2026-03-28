@@ -687,7 +687,6 @@
                 headerActions.style.display = 'flex';
                 phoneInput.disabled = false;
                 messageInput.disabled = false;
-                loadHistory();
             } else {
                 formSection.classList.remove('active');
                 tabsNav.style.display = 'none';
@@ -740,9 +739,6 @@
             tabContents.forEach(content => {
                 content.classList.toggle('active', content.id === `tab${tabName.charAt(0).toUpperCase() + tabName.slice(1)}`);
             });
-            if (tabName === 'historico') {
-                loadHistory();
-            }
         }
 
         async function loadHistory() {
