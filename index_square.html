@@ -394,6 +394,39 @@
         .btn-refresh-history:hover {
             background: #e0e0e0;
         }
+
+        /* Botão de Logout */
+        .btn-logout {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            margin-left: 10px;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: linear-gradient(135deg, #ff5252 0%, #d32f2f 100%);
+            transform: translateY(-1px);
+        }
+
+        .btn-logout:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .header-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -408,6 +441,11 @@
             <div class="status-badge disconnected" id="statusBadge">
                 <span class="loading-spinner"></span>
                 Verificando...
+            </div>
+            <div class="header-actions" id="headerActions" style="display: none;">
+                <button type="button" class="btn-logout" id="logoutBtn" title="Desconectar WhatsApp">
+                    🚪 Sair
+                </button>
             </div>
         </div>
 
@@ -530,6 +568,8 @@
         const tabContents = document.querySelectorAll('.tab-content');
         const historyContainer = document.getElementById('historyContainer');
         const refreshHistoryBtn = document.getElementById('refreshHistoryBtn');
+        const headerActions = document.getElementById('headerActions');
+        const logoutBtn = document.getElementById('logoutBtn');
 
         document.addEventListener('DOMContentLoaded', () => {
             checkStatus();
@@ -556,6 +596,9 @@
 
             // Event listener para atualizar histórico
             refreshHistoryBtn.addEventListener('click', loadHistory);
+
+            // Event listener para logout
+            logoutBtn.addEventListener('click', handleLogout);
         });
 
         async function checkStatus() {
@@ -641,14 +684,52 @@
                 formSection.classList.add('active');
                 qrcodeSection.classList.remove('active');
                 tabsNav.style.display = 'flex';
+                headerActions.style.display = 'flex';
                 phoneInput.disabled = false;
                 messageInput.disabled = false;
                 loadHistory();
             } else {
                 formSection.classList.remove('active');
                 tabsNav.style.display = 'none';
+                headerActions.style.display = 'none';
                 phoneInput.disabled = true;
                 messageInput.disabled = true;
+            }
+        }
+
+        async function handleLogout() {
+            if (!confirm('Tem certeza que deseja desconectar o WhatsApp?\n\nVocê precisará escanear o QR Code novamente para reconectar.')) {
+                return;
+            }
+
+            logoutBtn.disabled = true;
+            logoutBtn.innerHTML = '🔄 Saindo...';
+
+            try {
+                const response = await fetch(`${API_BASE}/logout`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    mode: 'cors'
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showAlert('👋 WhatsApp desconectado com sucesso!', 'success');
+                    isConnected = false;
+                    updateFormVisibility();
+                    checkStatus();
+                } else {
+                    showAlert(`❌ Erro: ${data.error || 'Não foi possível desconectar'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao fazer logout:', error);
+                showAlert('❌ Erro ao desconectar. Tente novamente.', 'error');
+            } finally {
+                logoutBtn.disabled = false;
+                logoutBtn.innerHTML = '🚪 Sair';
             }
         }
 

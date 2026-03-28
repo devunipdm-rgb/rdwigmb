@@ -410,6 +410,36 @@ app.get('/historico', async (req, res) => {
     }
 });
 
+// Endpoint para logout do WhatsApp
+app.post('/logout', async (req, res) => {
+    try {
+        if (!sock) {
+            return res.status(400).json({
+                success: false,
+                error: 'WhatsApp não está conectado'
+            });
+        }
+
+        // Desconectar do WhatsApp
+        await sock.logout();
+        sock = null;
+        
+        console.log('👋 WhatsApp desconectado via logout manual');
+        
+        return res.json({
+            success: true,
+            message: 'WhatsApp desconectado com sucesso'
+        });
+        
+    } catch (error) {
+        console.error('Erro ao fazer logout:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Erro ao desconectar: ' + error.message
+        });
+    }
+});
+
 app.get('/status', (req, res) => {
     res.json({ 
         conectado: !!(sock?.user),
