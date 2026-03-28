@@ -372,6 +372,44 @@ app.post('/enviar', async (req, res) => {
     }
 });
 
+// Endpoint para buscar histórico de mensagens do Firebase
+app.get('/historico', async (req, res) => {
+    try {
+        const limit = parseInt(req.query.limit) || 50;
+        
+        const snapshot = await db.collection('envios_concluidos')
+            .orderBy('data', 'desc')
+            .limit(limit)
+            .get();
+        
+        const registros = [];
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            registros.push({
+                id: doc.id,
+                contato: data.contato,
+                campanhaId: data.id_campanha,
+                status: data.status,
+                data: data.data ? data.data.toDate().toISOString() : null,
+                messageId: data.messageId || null
+            });
+        });
+        
+        return res.json({
+            success: true,
+            total: registros.length,
+            registros: registros
+        });
+        
+    } catch (error) {
+        console.error('Erro ao buscar histórico:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Erro ao buscar histórico: ' + error.message
+        });
+    }
+});
+
 app.get('/status', (req, res) => {
     res.json({ 
         conectado: !!(sock?.user),
@@ -391,12 +429,13 @@ app.get('/', (req, res) => {
 const PORT = 80; // Square Cloud requer porta 80
 console.log(`🚀 Iniciando servidor na porta ${PORT}...`);
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`✅ Backend rodando na porta ${PORT}`);
-    console.log(`📝 Endpoints disponíveis:`);
-    console.log(`   - GET  /           (health check)`);
-    console.log(`   - GET  /status     (status do WhatsApp)`);
-    console.log(`   - GET  /qrcode     (QR code para conexão)`);
-    console.log(`   - POST /disparar   (campanha com lista)`);
-    console.log(`   - POST /enviar     (envio individual - sem Firebase)`);
-    connectToWhatsApp();
+console.log(`✅ Backend rodando na porta ${PORT}`);
+console.log(`📝 Endpoints disponíveis:`);
+console.log(`   - GET  /           (health check)`);
+console.log(`   - GET  /status     (status do WhatsApp)`);
+console.log(`   - GET  /qrcode     (QR code para conexão)`);
+console.log(`   - GET  /historico  (histórico de envios)`);
+console.log(`   - POST /disparar   (campanha com lista)`);
+console.log(`   - POST /enviar     (envio individual - sem Firebase)`);
+connectToWhatsApp();
 });
