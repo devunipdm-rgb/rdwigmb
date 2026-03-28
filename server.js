@@ -59,7 +59,7 @@ const app = express();
 // CORS - Usar package cors
 // ============================================
 app.use(cors({
-    origin: ['https://rdwigmb.squareweb.app', 'null', 'file://'],
+    origin: '*', // Permitir todas as origens temporariamente
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH', 'HEAD'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
     credentials: false,
