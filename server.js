@@ -152,6 +152,8 @@ let isProcessing = false;
 
 let lastQR = null;
 
+let manualLogout = false; // Flag para indicar logout manual
+
 
 
 // 2. FUNÇÃO PRINCIPAL DO WHATSAPP (BAILEYS)
@@ -196,7 +198,14 @@ async function connectToWhatsApp() {
         if (connection === 'close') {
 
             lastQR = null;
-
+            
+            // Se foi logout manual, não reconectar
+            if (manualLogout) {
+                console.log('🚫 Reconexão automática desabilitada (logout manual)');
+                manualLogout = false; // Resetar flag
+                return;
+            }
+            
             const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
 
             // Reconectar silenciosamente
@@ -798,11 +807,14 @@ app.get('/historico', async (req, res) => {
 
 
 // Endpoint para logout do WhatsApp
-
 app.post('/logout', async (req, res) => {
     try {
+        console.log('👋 Solicitação de logout recebida');
+        
         if (!sock?.user) {
+            console.log('ℹ️ WhatsApp já estava desconectado');
             sock = null;
+            manualLogout = true; // Marcar como logout manual
             return res.json({
                 success: true,
                 message: 'WhatsApp já estava desconectado'
@@ -810,22 +822,31 @@ app.post('/logout', async (req, res) => {
         }
 
         try {
+            console.log('🔄 Executando logout...');
             await sock.logout();
+            console.log('✅ Logout executado com sucesso');
         } catch (logoutError) {
-            console.log('⚠️ Erro no logout (conexão já morta):', logoutError.message);
+            console.log('⚠️ Erro no logout:', logoutError.message);
         }
         
+        // Limpar sock e marcar como logout manual
         sock = null;
+        lastQR = null;
+        manualLogout = true;
+        
         console.log('👋 WhatsApp desconectado via logout manual');
+        console.log('📝 Próxima conexão será solicitada via QR Code');
         
         return res.json({
             success: true,
-            message: 'WhatsApp desconectado com sucesso'
+            message: 'WhatsApp desconectado com sucesso. QR Code será gerado na próxima conexão.'
         });
         
     } catch (error) {
-        console.error('Erro ao fazer logout:', error);
+        console.error('❌ Erro ao fazer logout:', error);
         sock = null;
+        lastQR = null;
+        manualLogout = true;
         return res.status(500).json({
             success: false,
             error: 'Erro ao desconectar: ' + error.message
