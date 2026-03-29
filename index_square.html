@@ -572,7 +572,12 @@
         const logoutBtn = document.getElementById('logoutBtn');
 
         document.addEventListener('DOMContentLoaded', () => {
-            checkStatus();
+            checkStatus().then(() => {
+                // Se não conectado, carregar QR code imediatamente
+                if (!isConnected) {
+                    loadQRCode();
+                }
+            });
             checkStatusInterval = setInterval(checkStatus, 3000);
             messageForm.addEventListener('submit', handleSendMessage);
             refreshBtn.addEventListener('click', (e) => {
@@ -719,7 +724,8 @@
                     showAlert('👋 WhatsApp desconectado com sucesso!', 'success');
                     isConnected = false;
                     updateFormVisibility();
-                    checkStatus();
+                    // Carregar QR code imediatamente após desconectar
+                    loadQRCode();
                 } else {
                     showAlert(`❌ Erro: ${data.error || 'Não foi possível desconectar'}`, 'error');
                 }
