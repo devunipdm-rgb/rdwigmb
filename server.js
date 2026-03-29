@@ -532,20 +532,23 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 app.get('/qrcode', async (req, res) => {
     try {
         console.log(`📥 [${new Date().toISOString()}] Requisição /qrcode recebida`);
-        console.log(`   Estado: sock?.user=${!!sock?.user}, lastQR=${!!lastQR}, sock=${!!sock}`);
+        console.log(`   Estado: isConnected=${isConnected}, sock?.user=${!!sock?.user}, lastQR=${!!lastQR}, sock=${!!sock}`);
         
-        // Se já conectado, retornar status como texto
+        // Se já conectado, retornar status
         if (isConnected && sock?.user) {
             console.log('   → Retornando: Conectado');
-            return res.send('Conectado');
+            return res.json({ conectado: true, qrcode: null });
         }
 
-        // Se tem QR code disponível, retornar imediatamente
+        // Se tem QR code disponível, retornar como base64
         if (lastQR) {
-            console.log('   → Gerando QR Code SVG...');
-            const qrSvg = await QRCode.toString(lastQR, { type: 'svg', width: 256 });
-            res.setHeader('Content-Type', 'image/svg+xml');
-            return res.send(qrSvg);
+            console.log('   → Gerando QR Code...');
+            // Gerar QR code como data URL (base64)
+            const qrDataUrl = await QRCode.toDataURL(lastQR, { width: 256 });
+            return res.json({ 
+                conectado: false, 
+                qrcode: qrDataUrl 
+            });
         }
 
         // Se não tem conexão ativa, iniciar nova conexão e aguardar QR
@@ -568,27 +571,33 @@ app.get('/qrcode', async (req, res) => {
             // Se QR code foi gerado, retornar
             if (lastQR) {
                 console.log(`   → QR Code gerado após ${tentativas * 0.5}s! Enviando...`);
-                const qrSvg = await QRCode.toString(lastQR, { type: 'svg', width: 256 });
-                res.setHeader('Content-Type', 'image/svg+xml');
-                return res.send(qrSvg);
+                const qrDataUrl = await QRCode.toDataURL(lastQR, { width: 256 });
+                return res.json({ 
+                    conectado: false, 
+                    qrcode: qrDataUrl 
+                });
             }
             
-            // Se não gerou QR ainda, retornar 202
-            console.log('   → QR Code ainda não gerado. Retornando 202...');
-            return res.status(202).json({ 
-                error: "Iniciando conexão... QR Code será gerado em instantes.", 
-                conectado: false,
-                iniciando: true
+            // Se não gerou QR ainda, retornar iniciando
+            console.log('   → QR Code ainda não gerado. Retornando iniciando...');
+            return res.json({ 
+                conectado: false, 
+                qrcode: null,
+                error: "Iniciando conexão... QR Code será gerado em instantes."
             });
         }
 
         // Se sock existe mas ainda não tem QR (conexão em andamento)
         console.log('   → Conexão em andamento, sem QR code ainda');
-        res.status(404).json({ error: "QR Code ainda não gerado ou expirado. Aguarde alguns segundos...", conectado: false });
+        res.json({ 
+            conectado: false, 
+            qrcode: null,
+            error: "QR Code ainda não gerado ou expirado. Aguarde alguns segundos..."
+        });
 
     } catch (error) {
         console.error('Erro ao gerar QR code:', error);
-        res.status(500).json({ error: "Erro ao gerar QR Code" });
+        res.status(500).json({ conectado: false, qrcode: null, error: "Erro ao gerar QR Code" });
     }
 });
 
