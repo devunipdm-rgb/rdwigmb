@@ -535,9 +535,9 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 // Endpoint para o frontend buscar o QR Code
 app.get('/qrcode', async (req, res) => {
     try {
-        // Se já conectado, retornar status
+        // Se já conectado, retornar status como texto
         if (sock?.user) {
-            return res.json({ status: "Conectado", conectado: true });
+            return res.send('Conectado');
         }
 
         // Se tem QR code disponível
