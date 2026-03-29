@@ -542,9 +542,10 @@ app.get('/qrcode', async (req, res) => {
 
         // Se tem QR code disponível
         if (lastQR) {
-            // Gerar QR code como imagem PNG base64
-            const qrDataUrl = await QRCode.toDataURL(lastQR, { width: 256 });
-            return res.json({ qrcode: qrDataUrl, conectado: false });
+            // Gerar QR code como imagem SVG (compatível com frontend)
+            const qrSvg = await QRCode.toString(lastQR, { type: 'svg', width: 256 });
+            res.setHeader('Content-Type', 'image/svg+xml');
+            return res.send(qrSvg);
         }
 
         // Se não tem QR code ainda
