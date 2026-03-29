@@ -185,11 +185,10 @@ async function connectToWhatsApp() {
         
 
         if (qr) {
-
             lastQR = qr; // Armazena o QR Code para o endpoint
-
+            console.log('\n📱 QR Code gerado! Escaneie com seu WhatsApp:');
             qrcode.generate(qr, { small: true });
-
+            console.log('📲 QR Code também disponível no endpoint /qrcode\n');
         }
 
 
