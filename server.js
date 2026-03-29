@@ -154,6 +154,8 @@ let lastQR = null;
 
 let manualLogout = false; // Flag para indicar logout manual
 
+let isConnected = false; // Flag para rastrear estado real da conexão
+
 
 
 // 2. FUNÇÃO PRINCIPAL DO WHATSAPP (BAILEYS)
@@ -198,6 +200,7 @@ async function connectToWhatsApp() {
         if (connection === 'close') {
 
             lastQR = null;
+            isConnected = false; // Marcar como desconectado
             
             // Se foi logout manual, não reconectar
             if (manualLogout) {
@@ -215,6 +218,7 @@ async function connectToWhatsApp() {
         } else if (connection === 'open') {
 
             lastQR = null;
+            isConnected = true; // Marcar como conectado
 
             console.log('✅ WhatsApp conectado com sucesso!');
 
@@ -408,7 +412,7 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 
                     });
 
-
+                    
 
                 } catch (error) {
 
@@ -512,8 +516,6 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 
             await delay(tempoEspera);
 
-
-
         } catch (error) {
 
             console.error(`❌ Erro ao processar ${contato}:`, error.message);
@@ -533,7 +535,7 @@ app.get('/qrcode', async (req, res) => {
         console.log(`   Estado: sock?.user=${!!sock?.user}, lastQR=${!!lastQR}, sock=${!!sock}`);
         
         // Se já conectado, retornar status como texto
-        if (sock?.user) {
+        if (isConnected && sock?.user) {
             console.log('   → Retornando: Conectado');
             return res.send('Conectado');
         }
@@ -848,9 +850,20 @@ app.post('/logout', async (req, res) => {
             console.log('⚠️ Erro no logout:', logoutError.message);
         }
         
+        // Limpar credenciais salvas para forçar novo QR Code na próxima conexão
+        try {
+            if (fs.existsSync('./auth_info_baileys')) {
+                fs.rmSync('./auth_info_baileys', { recursive: true, force: true });
+                console.log('🗑️  Credenciais limpas - próxima conexão exigirá novo QR Code');
+            }
+        } catch (fsError) {
+            console.log('⚠️  Erro ao limpar credenciais:', fsError.message);
+        }
+        
         // Limpar sock e marcar como logout manual
         sock = null;
         lastQR = null;
+        isConnected = false;
         manualLogout = true;
         
         console.log('👋 WhatsApp desconectado via logout manual');
@@ -865,6 +878,7 @@ app.post('/logout', async (req, res) => {
         console.error('❌ Erro ao fazer logout:', error);
         sock = null;
         lastQR = null;
+        isConnected = false;
         manualLogout = true;
         return res.status(500).json({
             success: false,
@@ -910,11 +924,11 @@ app.get('/status', (req, res) => {
 
     res.json({ 
 
-        conectado: !!(sock?.user),
+        conectado: !!(isConnected && sock?.user),
 
         processando: isProcessing,
 
-        numero: sock?.user?.id || null
+        numero: (isConnected && sock?.user) ? sock.user.id : null
 
     });
 
