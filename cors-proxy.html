@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Disparador WhatsApp - RDW IGMB (Proxy)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        .status-badge.disconnected {
+            background-color: #fee;
+            color: #c33;
+        }
+
+        .status-badge.connected {
+            background-color: #efe;
+            color: #3c3;
+        }
+
+        .status-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            color: #666;
+        }
+
+        .qrcode-section {
+            display: none;
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #eee;
+        }
+
+        .qrcode-section.active {
+            display: block;
+        }
+
+        .qrcode-section h2 {
+            color: #333;
+            font-size: 18px;
+            margin-bottom: 15px;
+        }
+
+        .qrcode-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+            margin-bottom: 15px;
+        }
+
+        .qrcode-container img {
+            max-width: 250px;
+            max-height: 250px;
+        }
+
+        .qrcode-placeholder {
+            color: #999;
+            text-align: center;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .form-section {
+            display: none;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            max-height: 200px;
+        }
+
+        .form-group input:disabled,
+        .form-group textarea:disabled {
+            background-color: #f5f5f5;
+            color: #999;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        button {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-send:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-send:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-refresh {
+            background: #f0f0f0;
+            color: #333;
+            flex: 0.3;
+        }
+
+        .btn-refresh:hover {
+            background: #e0e0e0;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .alert.active {
+            display: block;
+        }
+
+        .alert.success {
+            background-color: #efe;
+            border: 2px solid #3c3;
+            color: #030;
+        }
+
+        .alert.error {
+            background-color: #fee;
+            border: 2px solid #c33;
+            color: #300;
+        }
+
+        .alert.info {
+            background-color: #eef;
+            border: 2px solid #33c;
+            color: #003;
+        }
+
+        .counter {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .contact-preview {
+            display: inline-block;
+            background: #f0f0f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            margin-top: 5px;
+            color: #666;
+        }
+
+        .refresh-info {
+            font-size: 12px;
+            color: #999;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .spinner-text {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .server-info {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border: 2px solid #4caf50;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .proxy-info {
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            border: 2px solid #ff9800;
+            color: #e65100;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📱 Disparador WhatsApp</h1>
+            <p>RDW IGMB - Baileys & Firebase</p>
+            <div class="proxy-info">
+                🌐 Usando Proxy CORS para Square Cloud
+            </div>
+            <div class="status-badge disconnected" id="statusBadge">
+                <span class="loading-spinner"></span>
+                Verificando...
+            </div>
+        </div>
+
+        <!-- Status Info -->
+        <div class="status-info" id="statusInfo">
+            <strong>Status:</strong> <span id="statusText">Carregando...</span> <br>
+            <strong>Número:</strong> <span id="numberText">-</span>
+        </div>
+
+        <!-- Alert Messages -->
+        <div class="alert" id="alertBox"></div>
+
+        <!-- QR Code Section -->
+        <div class="qrcode-section" id="qrcodeSection">
+            <h2>Escaneie o Código QR</h2>
+            <p style="color: #666; font-size: 13px; margin-bottom: 15px;">
+                Use seu celular para fotografar o código abaixo
+            </p>
+            <div class="qrcode-container">
+                <div class="qrcode-placeholder" id="qrcodeContainer">
+                    <div class="spinner-text">
+                        <span class="loading-spinner"></span>
+                        Gerando QR Code...
+                    </div>
+                </div>
+            </div>
+            <div class="refresh-info" id="refreshInfo"></div>
+        </div>
+
+        <!-- Form Section -->
+        <div class="form-section" id="formSection">
+            <form id="messageForm">
+                <div class="form-group">
+                    <label for="phoneNumber">
+                        📱 Número de WhatsApp
+                        <span class="counter" id="charCounter">0</span>
+                    </label>
+                    <input 
+                        type="tel" 
+                        id="phoneNumber" 
+                        placeholder="Ex: 34998713466 (sem +55)" 
+                        required
+                        pattern="[0-9]+"
+                        maxlength="20"
+                    >
+                    <div class="contact-preview" id="phonePreview" style="display: none;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label for="message">
+                        ✉️ Mensagem
+                        <span class="counter" id="msgCounter">0</span>
+                    </label>
+                    <textarea 
+                        id="message" 
+                        placeholder="Digite sua mensagem aqui..." 
+                        required
+                        maxlength="1000"
+                    ></textarea>
+                </div>
+
+                <div class="button-group">
+                    <button type="submit" class="btn-send" id="sendBtn">
+                        Enviar Mensagem
+                    </button>
+                    <button type="button" class="btn-refresh" id="refreshBtn" title="Atualizar Status">
+                        🔄
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const SQUARE_URL = 'https://rdwigmb.squareweb.app';
+        const PROXY_URL = 'https://cors-anywhere.herokuapp.com/';
+        let isConnected = false;
+        let checkStatusInterval;
+
+        const statusBadge = document.getElementById('statusBadge');
+        const statusText = document.getElementById('statusText');
+        const numberText = document.getElementById('numberText');
+        const alertBox = document.getElementById('alertBox');
+        const qrcodeSection = document.getElementById('qrcodeSection');
+        const qrcodeContainer = document.getElementById('qrcodeContainer');
+        const formSection = document.getElementById('formSection');
+        const messageForm = document.getElementById('messageForm');
+        const phoneInput = document.getElementById('phoneNumber');
+        const messageInput = document.getElementById('message');
+        const sendBtn = document.getElementById('sendBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const charCounter = document.getElementById('charCounter');
+        const msgCounter = document.getElementById('msgCounter');
+        const phonePreview = document.getElementById('phonePreview');
+        const refreshInfo = document.getElementById('refreshInfo');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            checkStatus();
+            checkStatusInterval = setInterval(checkStatus, 3000);
+            messageForm.addEventListener('submit', handleSendMessage);
+            refreshBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                checkStatus();
+            });
+            phoneInput.addEventListener('input', updatePhonePreview);
+            charCounter.textContent = phoneInput.value.length;
+            msgCounter.textContent = messageInput.value.length;
+            phoneInput.addEventListener('input', () => {
+                charCounter.textContent = phoneInput.value.length;
+            });
+            messageInput.addEventListener('input', () => {
+                msgCounter.textContent = messageInput.value.length;
+            });
+        });
+
+        async function proxyFetch(url, options = {}) {
+            try {
+                // Tentar direto primeiro
+                const response = await fetch(url, {
+                    ...options,
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...options.headers
+                    }
+                });
+                return response;
+            } catch (error) {
+                // Se falhar, tentar com proxy
+                console.log('Tentando com proxy CORS...');
+                const proxyResponse = await fetch(PROXY_URL + url, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        ...options.headers
+                    }
+                });
+                return proxyResponse;
+            }
+        }
+
+        async function checkStatus() {
+            try {
+                const response = await proxyFetch(`${SQUARE_URL}/status`);
+                const data = await response.json();
+
+                isConnected = data.conectado;
+                const numero = data.numero ? data.numero.replace('@s.whatsapp.net', '') : '-';
+
+                updateStatusUI(isConnected, numero, data.processando);
+                updateFormVisibility();
+
+                if (!isConnected) {
+                    loadQRCode();
+                }
+            } catch (error) {
+                console.error('Erro ao verificar status:', error);
+                isConnected = false;
+                statusText.textContent = 'Erro de conexão com servidor';
+                statusBadge.className = 'status-badge disconnected';
+                updateFormVisibility();
+                showAlert('⚠️ Erro ao conectar com servidor Square Cloud. Tente usar o servidor Local.', 'error');
+            }
+        }
+
+        function updateStatusUI(connected, numero, processando) {
+            if (connected) {
+                statusBadge.className = 'status-badge connected';
+                statusBadge.innerHTML = '✅ Conectado';
+                statusText.textContent = 'WhatsApp Conectado';
+                numberText.textContent = numero;
+            } else {
+                statusBadge.className = 'status-badge disconnected';
+                statusBadge.innerHTML = '<span class="loading-spinner"></span> Aguardando QR Code';
+                statusText.textContent = 'Aguardando autenticação via QR Code';
+                numberText.textContent = '-';
+            }
+
+            if (processando) {
+                sendBtn.disabled = true;
+                sendBtn.textContent = 'Enviando...';
+            } else {
+                sendBtn.disabled = !connected;
+                sendBtn.textContent = 'Enviar Mensagem';
+            }
+        }
+
+        async function loadQRCode() {
+            try {
+                const response = await proxyFetch(`${SQUARE_URL}/qrcode`);
+                const html = await response.text();
+
+                if (html === 'Conectado') {
+                    qrcodeSection.classList.remove('active');
+                    return;
+                }
+
+                qrcodeSection.classList.add('active');
+                qrcodeContainer.innerHTML = html;
+                refreshInfo.textContent = 'QR Code atualizado. Scan com seu celular.';
+
+                setTimeout(loadQRCode, 30000);
+            } catch (error) {
+                console.error('Erro ao carregar QR Code:', error);
+                qrcodeContainer.innerHTML = '<div class="qrcode-placeholder">⚠️ Erro ao carregar QR Code</div>';
+            }
+        }
+
+        function updateFormVisibility() {
+            if (isConnected) {
+                formSection.classList.add('active');
+                qrcodeSection.classList.remove('active');
+                phoneInput.disabled = false;
+                messageInput.disabled = false;
+            } else {
+                formSection.classList.remove('active');
+                phoneInput.disabled = true;
+                messageInput.disabled = true;
+            }
+        }
+
+        function updatePhonePreview() {
+            if (phoneInput.value.trim()) {
+                let numero = phoneInput.value.trim().replace(/\D/g, '');
+                if (!numero.startsWith('55')) {
+                    numero = '55' + numero;
+                }
+                phonePreview.textContent = `📞 +${numero}`;
+                phonePreview.style.display = 'inline-block';
+            } else {
+                phonePreview.style.display = 'none';
+            }
+        }
+
+        async function handleSendMessage(e) {
+            e.preventDefault();
+
+            let phone = phoneInput.value.trim();
+            const message = messageInput.value.trim();
+
+            if (!phone) {
+                showAlert('❌ Por favor, insira um número de WhatsApp', 'error');
+                phoneInput.focus();
+                return;
+            }
+
+            if (!message) {
+                showAlert('❌ Por favor, insira uma mensagem', 'error');
+                messageInput.focus();
+                return;
+            }
+
+            phone = phone.replace(/\D/g, '');
+
+            if (!phone.startsWith('55')) {
+                phone = '55' + phone;
+            }
+
+            if (phone.length < 12 || phone.length > 13) {
+                showAlert('❌ O número deve ter 11-12 dígitos (sem contar o código de país)', 'error');
+                phoneInput.focus();
+                return;
+            }
+
+            sendBtn.disabled = true;
+            sendBtn.innerHTML = '<span class="spinner-text"><span class="loading-spinner"></span>Enviando...</span>';
+
+            try {
+                const response = await proxyFetch(`${SQUARE_URL}/disparar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        campanhaId: `web_${Date.now()}`,
+                        contatos: [phone],
+                        mensagem: message
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert(`✅ ${data.message}\n\n📊 Contatos: ${data.contatoCount}\n💡 ${data.info}`, 'success');
+                    messageForm.reset();
+                    charCounter.textContent = '0';
+                    msgCounter.textContent = '0';
+                    phonePreview.style.display = 'none';
+                } else {
+                    showAlert(`❌ Erro: ${data.error || 'Não foi possível enviar'}`, 'error');
+                }
+            } catch (error) {
+                console.error('Erro ao enviar:', error);
+                showAlert('❌ Erro ao conectar com servidor. Verifique a conexão e tente novamente.', 'error');
+            } finally {
+                sendBtn.disabled = !isConnected;
+                sendBtn.innerHTML = 'Enviar Mensagem';
+            }
+        }
+
+        function showAlert(message, type) {
+            alertBox.textContent = message;
+            alertBox.className = `alert ${type} active`;
+            setTimeout(() => {
+                alertBox.classList.remove('active');
+            }, 5000);
+        }
+
+        window.addEventListener('beforeunload', () => {
+            clearInterval(checkStatusInterval);
+        });
+    </script>
+</body>
+</html>

@@ -35,18 +35,26 @@ const squareProxy = createProxyMiddleware({
     }
 });
 
-// Servir o HTML estático
-app.use(express.static('.'));
+// Middleware para log de todas as requisições
+app.use((req, res, next) => {
+    console.log(`📥 REQUEST RECEIVED: ${req.method} ${req.url}`);
+    next();
+});
 
-// Rotas do proxy
+// Middleware para parse JSON
+app.use(express.json());
+
+// Rotas do proxy (ANTES do static) - com path completo
 app.use('/status', squareProxy);
 app.use('/qrcode', squareProxy);
 app.use('/disparar', squareProxy);
 
-// Rota principal para servir o index_square.html
+// Servir o HTML estático (APENAS para arquivos, não para APIs)
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/index_square.html');
+    res.sendFile(__dirname + '/test-proxy.html');
 });
+
+app.use(express.static('.'));
 
 const PORT = 3001;
 app.listen(PORT, '0.0.0.0', () => {

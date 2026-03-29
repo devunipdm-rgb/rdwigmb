@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Proxy Square Cloud</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+        .status { background: #f0f0f0; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        button { background: #007bff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; margin: 5px; }
+        button:hover { background: #0056b3; }
+        input, textarea { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 3px; }
+        .log { background: #000; color: #00ff00; padding: 10px; font-family: monospace; height: 200px; overflow-y: scroll; margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Teste Proxy Square Cloud</h1>
+    
+    <div class="status" id="status">
+        <strong>Status:</strong> <span id="statusText">Testando conexão...</span>
+    </div>
+
+    <div class="log" id="log">📋 Log de requisições aparecerá aqui...\n</div>
+
+    <h2>📱 Testar Status</h2>
+    <button onclick="testStatus()">Verificar Status</button>
+
+    <h2>📨 Testar Envio</h2>
+    <input type="tel" id="phone" placeholder="Número (ex: 34998713466)" value="34998713466">
+    <textarea id="message" placeholder="Mensagem de teste">Mensagem de teste via proxy</textarea>
+    <button onclick="testSend()">Enviar Mensagem</button>
+
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        const logDiv = document.getElementById('log');
+        const statusDiv = document.getElementById('status');
+        const statusText = document.getElementById('statusText');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+
+        async function testStatus() {
+            log('🔍 Testando status...');
+            try {
+                const response = await fetch(`${API_BASE}/status`, {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                
+                const data = await response.json();
+                log(`✅ Status OK: ${JSON.stringify(data)}`);
+                
+                statusDiv.className = 'status success';
+                statusText.textContent = `Conectado: ${data.conectado ? 'Sim' : 'Não'} | Processando: ${data.processando ? 'Sim' : 'Não'}`;
+                
+                if (data.numero) {
+                    statusText.textContent += ` | Número: ${data.numero.replace('@s.whatsapp.net', '')}`;
+                }
+                
+            } catch (error) {
+                log(`❌ Erro status: ${error.message}`);
+                statusDiv.className = 'status error';
+                statusText.textContent = `Erro: ${error.message}`;
+            }
+        }
+
+        async function testSend() {
+            const phone = document.getElementById('phone').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            if (!phone || !message) {
+                log('⚠️ Preencha número e mensagem');
+                return;
+            }
+
+            log(`📤 Enviando para ${phone}: "${message}"`);
+            
+            try {
+                const response = await fetch(`${API_BASE}/disparar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        campanhaId: `test_${Date.now()}`,
+                        contatos: [phone],
+                        mensagem: message
+                    })
+                });
+                
+                const data = await response.json();
+                log(`✅ Envio OK: ${JSON.stringify(data)}`);
+                
+                if (response.ok) {
+                    log(`🎉 Mensagem enviada com sucesso!`);
+                } else {
+                    log(`⚠️ Erro no envio: ${data.error || 'Erro desconhecido'}`);
+                }
+                
+            } catch (error) {
+                log(`❌ Erro envio: ${error.message}`);
+            }
+        }
+
+        // Testar automaticamente ao carregar
+        window.onload = () => {
+            log('🚀 Iniciando teste de proxy...');
+            log(`📡 API_BASE: ${API_BASE}`);
+            testStatus();
+        };
+    </script>
+</body>
+</html>
