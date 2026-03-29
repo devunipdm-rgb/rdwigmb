@@ -534,13 +534,18 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 // Endpoint para o frontend buscar o QR Code
 app.get('/qrcode', async (req, res) => {
     try {
+        console.log(`📥 [${new Date().toISOString()}] Requisição /qrcode recebida`);
+        console.log(`   Estado: sock?.user=${!!sock?.user}, lastQR=${!!lastQR}`);
+        
         // Se já conectado, retornar status como texto
         if (sock?.user) {
+            console.log('   → Retornando: Conectado');
             return res.send('Conectado');
         }
 
         // Se tem QR code disponível
         if (lastQR) {
+            console.log('   → Gerando QR Code SVG...');
             // Gerar QR code como imagem SVG (compatível com frontend)
             const qrSvg = await QRCode.toString(lastQR, { type: 'svg', width: 256 });
             res.setHeader('Content-Type', 'image/svg+xml');
@@ -548,6 +553,7 @@ app.get('/qrcode', async (req, res) => {
         }
 
         // Se não tem QR code ainda
+        console.log('   → Retornando 404: QR Code não gerado');
         res.status(404).json({ error: "QR Code ainda não gerado ou expirado", conectado: false });
 
     } catch (error) {
