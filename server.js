@@ -534,8 +534,29 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 
 
 // Endpoint para o frontend buscar o QR Code como imagem
-// ... (restante do código permanece o mesmo até aqui)
+app.get('/qrcode', async (req, res) => {
+    try {
+        // Se já conectado, retornar status
+        if (sock?.user) {
+            return res.send('Conectado');
+        }
 
+        // Se tem QR code disponível
+        if (lastQR) {
+            // Gerar QR code como imagem SVG
+            const qrSvg = await QRCode.toString(lastQR, { type: 'svg', width: 256 });
+            res.setHeader('Content-Type', 'image/svg+xml');
+            return res.send(qrSvg);
+        }
+
+        // Se não tem QR code ainda
+        res.status(503).send('Aguardando QR Code...');
+
+    } catch (error) {
+        console.error('Erro ao gerar QR code:', error);
+        res.status(500).send('Erro ao gerar QR Code');
+    }
+});
 
 app.post('/disparar', async (req, res) => {
 
@@ -775,59 +796,37 @@ app.get('/historico', async (req, res) => {
 // Endpoint para logout do WhatsApp
 
 app.post('/logout', async (req, res) => {
-
     try {
-
-        if (!sock) {
-
-            return res.status(400).json({
-
-                success: false,
-
-                error: 'WhatsApp não está conectado'
-
+        if (!sock?.user) {
+            sock = null;
+            return res.json({
+                success: true,
+                message: 'WhatsApp já estava desconectado'
             });
-
         }
 
-
-
-        // Desconectar do WhatsApp
-
-        await sock.logout();
-
+        try {
+            await sock.logout();
+        } catch (logoutError) {
+            console.log('⚠️ Erro no logout (conexão já morta):', logoutError.message);
+        }
+        
         sock = null;
-
-        
-
         console.log('👋 WhatsApp desconectado via logout manual');
-
         
-
         return res.json({
-
             success: true,
-
             message: 'WhatsApp desconectado com sucesso'
-
         });
-
         
-
     } catch (error) {
-
         console.error('Erro ao fazer logout:', error);
-
+        sock = null;
         return res.status(500).json({
-
             success: false,
-
             error: 'Erro ao desconectar: ' + error.message
-
         });
-
     }
-
 });
 
 
