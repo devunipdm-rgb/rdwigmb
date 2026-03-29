@@ -856,6 +856,37 @@ app.post('/logout', async (req, res) => {
 
 
 
+// Endpoint para forçar reconexão e gerar novo QR Code
+app.post('/reconnect', async (req, res) => {
+    try {
+        console.log('🔄 Solicitação de reconexão recebida');
+        
+        // Limpar estado atual
+        sock = null;
+        lastQR = null;
+        manualLogout = false;
+        
+        console.log('🧹 Estado limpo, iniciando nova conexão...');
+        
+        // Iniciar nova conexão
+        await connectToWhatsApp();
+        
+        console.log('✅ Nova conexão iniciada, aguardando QR Code...');
+        
+        return res.json({
+            success: true,
+            message: 'Reconexão iniciada. QR Code será gerado em instantes.'
+        });
+        
+    } catch (error) {
+        console.error('❌ Erro ao reconectar:', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Erro ao reconectar: ' + error.message
+        });
+    }
+});
+
 app.get('/status', (req, res) => {
 
     res.json({ 
