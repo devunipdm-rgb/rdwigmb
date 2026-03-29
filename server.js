@@ -532,29 +532,27 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 
 // 4. ENDPOINTS API
 
-
-// Endpoint para o frontend buscar o QR Code como imagem
+// Endpoint para o frontend buscar o QR Code
 app.get('/qrcode', async (req, res) => {
     try {
         // Se já conectado, retornar status
         if (sock?.user) {
-            return res.send('Conectado');
+            return res.json({ status: "Conectado", conectado: true });
         }
 
         // Se tem QR code disponível
         if (lastQR) {
-            // Gerar QR code como imagem SVG
-            const qrSvg = await QRCode.toString(lastQR, { type: 'svg', width: 256 });
-            res.setHeader('Content-Type', 'image/svg+xml');
-            return res.send(qrSvg);
+            // Gerar QR code como imagem PNG base64
+            const qrDataUrl = await QRCode.toDataURL(lastQR, { width: 256 });
+            return res.json({ qrcode: qrDataUrl, conectado: false });
         }
 
         // Se não tem QR code ainda
-        res.status(503).send('Aguardando QR Code...');
+        res.status(404).json({ error: "QR Code ainda não gerado ou expirado", conectado: false });
 
     } catch (error) {
         console.error('Erro ao gerar QR code:', error);
-        res.status(500).send('Erro ao gerar QR Code');
+        res.status(500).json({ error: "Erro ao gerar QR Code" });
     }
 });
 
