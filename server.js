@@ -67,9 +67,10 @@ app.use(cors({
     optionsSuccessStatus: 204
 }));
 
-// JSON parser
-app.use(express.json());
-app.use(express.static('.')); // Servir arquivos estáticos (HTML, CSS, JS)
+// JSON parser com limite aumentado para imagens Base64
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.static('.'));
 
 let sock;
 let isProcessing = false;
@@ -120,11 +121,12 @@ async function connectToWhatsApp() {
 }
 
 // 3. LÓGICA DE DISPARO COM CHECKPOINT NO FIRESTORE
-async function startCampaign(campanhaId, listaContatos, mensagem) {
+async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64) {
     if (isProcessing) return;
     isProcessing = true;
 
     console.log(`\n🚀 Campanha iniciada: ${campanhaId} | ${listaContatos.length} contatos`);
+    console.log(imagemBase64 ? '📸 Imagem incluída no envio' : '📝 Apenas texto');
 
     let enviados = 0;
     let falhados = 0;
@@ -172,7 +174,19 @@ async function startCampaign(campanhaId, listaContatos, mensagem) {
                 try {
                     // Log silencioso
                     
-                    const result = await sock.sendMessage(numeroWhatsApp, { text: mensagem });
+                    // Verificar se tem imagem para enviar
+                    let result;
+                    if (imagemBase64 && imagemBase64.startsWith('data:image')) {
+                        // Enviar imagem com caption (texto como legenda)
+                        const imageBuffer = Buffer.from(imagemBase64.split(',')[1], 'base64');
+                        result = await sock.sendMessage(numeroWhatsApp, { 
+                            image: imageBuffer,
+                            caption: mensagem
+                        });
+                    } else {
+                        // Enviar apenas texto
+                        result = await sock.sendMessage(numeroWhatsApp, { text: mensagem });
+                    }
                     
                     sucesso = true;
                     enviados++;
@@ -263,12 +277,19 @@ app.get('/qrcode', async (req, res) => {
 });
 
 app.post('/disparar', async (req, res) => {
-    const { campanhaId, contatos, mensagem } = req.body;
+    const { campanhaId, contatos, mensagem, imagem } = req.body;
     
     // Validar dados
-    if (!campanhaId || !contatos || !mensagem) {
+    if (!campanhaId || !contatos) {
         return res.status(400).json({ 
-            error: "Faltam dados obrigatórios: campanhaId, contatos, mensagem" 
+            error: "Faltam dados obrigatórios: campanhaId, contatos" 
+        });
+    }
+
+    // Permitir mensagem vazia se tiver imagem
+    if ((!mensagem || mensagem.trim().length === 0) && !imagem) {
+        return res.status(400).json({ 
+            error: "Campanha deve ter mensagem ou imagem" 
         });
     }
 
@@ -278,9 +299,9 @@ app.post('/disparar', async (req, res) => {
         });
     }
 
-    if (typeof mensagem !== 'string' || mensagem.trim().length === 0) {
+    if (typeof mensagem !== 'string') {
         return res.status(400).json({ 
-            error: "mensagem deve ser uma string não vazia" 
+            error: "mensagem deve ser uma string" 
         });
     }
 
@@ -297,8 +318,8 @@ app.post('/disparar', async (req, res) => {
         });
     }
 
-    // Iniciar campanha em background
-    startCampaign(campanhaId, contatos, mensagem).catch(err => {
+    // Iniciar campanha em background (passando imagem se existir)
+    startCampaign(campanhaId, contatos, mensagem || '', imagem).catch(err => {
         console.error('Erro na campanha:', err);
     });
 
