@@ -518,20 +518,6 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 
             console.error(`❌ Erro ao processar ${contato}:`, error.message);
 
-            falhados++;
-
-            
-
-            if (error.message.includes('connection')) {
-
-                console.error('❌ Conexão perdida. Interrompendo campanha.');
-
-                isProcessing = false;
-
-                break;
-
-            }
-
         }
 
     }
@@ -561,9 +547,21 @@ app.get('/qrcode', async (req, res) => {
             return res.send(qrSvg);
         }
 
-        // Se não tem QR code ainda
-        console.log('   → Retornando 404: QR Code não gerado');
-        res.status(404).json({ error: "QR Code ainda não gerado ou expirado", conectado: false });
+        // Se não tem conexão e não tem QR code, iniciar nova conexão
+        if (!sock) {
+            console.log('   → Sem conexão ativa. Iniciando nova conexão...');
+            manualLogout = false; // Permitir reconexão
+            connectToWhatsApp();
+            return res.status(202).json({ 
+                error: "Iniciando conexão... QR Code será gerado em instantes.", 
+                conectado: false,
+                iniciando: true
+            });
+        }
+
+        // Se não tem QR code ainda (conexão em andamento)
+        console.log('   → Retornando 404: QR Code ainda não gerado');
+        res.status(404).json({ error: "QR Code ainda não gerado ou expirado. Aguarde alguns segundos...", conectado: false });
 
     } catch (error) {
         console.error('Erro ao gerar QR code:', error);
