@@ -156,6 +156,11 @@ let manualLogout = false; // Flag para indicar logout manual
 
 let isConnected = false; // Flag para rastrear estado real da conexão
 
+// Variáveis de controle do timeout do QR Code
+let qrStartTime = null; // Timestamp quando a geração de QR começou
+let qrTimeoutMs = 2 * 60 * 1000; // 2 minutos em milissegundos
+let qrTimeoutReached = false; // Flag indicando se timeout foi atingido
+
 
 
 // 2. FUNÇÃO PRINCIPAL DO WHATSAPP (BAILEYS)
@@ -189,6 +194,26 @@ async function connectToWhatsApp() {
         
 
         if (qr) {
+            // Verificar se timeout foi atingido
+            if (qrTimeoutReached) {
+                console.log('⏰ Timeout atingido - ignorando novo QR Code');
+                return;
+            }
+            
+            // Iniciar timer na primeira vez que o QR for gerado
+            if (!qrStartTime) {
+                qrStartTime = Date.now();
+                console.log('⏱️  Timer de 2 minutos iniciado para QR Code');
+            }
+            
+            // Verificar se passou 2 minutos
+            const elapsed = Date.now() - qrStartTime;
+            if (elapsed > qrTimeoutMs) {
+                qrTimeoutReached = true;
+                console.log(`⏰ Timeout de 2 minutos atingido (${Math.round(elapsed/1000)}s). QR Code não será mais gerado.`);
+                return;
+            }
+            
             lastQR = qr; // Armazena o QR Code para o endpoint
             console.log('\n📱 QR Code gerado! Escaneie com seu WhatsApp:');
             qrcode.generate(qr, { small: true });
@@ -219,6 +244,10 @@ async function connectToWhatsApp() {
 
             lastQR = null;
             isConnected = true; // Marcar como conectado
+            
+            // Resetar timer quando conectar
+            qrStartTime = null;
+            qrTimeoutReached = false;
 
             console.log('✅ WhatsApp conectado com sucesso!');
 
@@ -532,12 +561,23 @@ async function startCampaign(campanhaId, listaContatos, mensagem, imagemBase64, 
 app.get('/qrcode', async (req, res) => {
     try {
         console.log(`📥 [${new Date().toISOString()}] Requisição /qrcode recebida`);
-        console.log(`   Estado: isConnected=${isConnected}, sock?.user=${!!sock?.user}, lastQR=${!!lastQR}, sock=${!!sock}`);
+        console.log(`   Estado: isConnected=${isConnected}, sock?.user=${!!sock?.user}, lastQR=${!!lastQR}, sock=${!!sock}, timeoutReached=${qrTimeoutReached}`);
         
         // Se já conectado, retornar status
         if (isConnected && sock?.user) {
             console.log('   → Retornando: Conectado');
             return res.json({ conectado: true, qrcode: null });
+        }
+
+        // Se timeout foi atingido, verificar se é uma nova solicitação (reset)
+        if (qrTimeoutReached) {
+            // Se não tem sock ativo, resetar timeout para permitir nova tentativa
+            if (!sock) {
+                console.log('🔄 Nova solicitação após timeout - resetando timer');
+                qrTimeoutReached = false;
+                qrStartTime = null;
+                lastQR = null;
+            }
         }
 
         // Se tem QR code disponível, retornar como base64
@@ -555,6 +595,13 @@ app.get('/qrcode', async (req, res) => {
         if (!sock) {
             console.log('   → Sem conexão ativa. Iniciando nova conexão...');
             manualLogout = false;
+            
+            // Resetar timer para nova tentativa
+            if (qrTimeoutReached) {
+                console.log('🔄 Resetando timeout para nova tentativa');
+                qrTimeoutReached = false;
+                qrStartTime = null;
+            }
             
             // Iniciar conexão
             connectToWhatsApp();
@@ -907,6 +954,11 @@ app.post('/reconnect', async (req, res) => {
         sock = null;
         lastQR = null;
         manualLogout = false;
+        
+        // Resetar timeout para permitir nova geração de QR
+        qrTimeoutReached = false;
+        qrStartTime = null;
+        console.log('🔄 Timeout resetado - nova tentativa de QR Code permitida');
         
         console.log('🧹 Estado limpo, iniciando nova conexão...');
         
