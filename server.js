@@ -158,7 +158,7 @@ let isConnected = false; // Flag para rastrear estado real da conexão
 
 // Variáveis de controle do timeout do QR Code
 let qrStartTime = null; // Timestamp quando a geração de QR começou
-let qrTimeoutMs = 2 * 60 * 1000; // 2 minutos em milissegundos
+let qrTimeoutMs = 10 * 1000; // 10 segundos em milissegundos
 let qrTimeoutReached = false; // Flag indicando se timeout foi atingido
 
 
